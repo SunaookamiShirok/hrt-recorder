@@ -1,0 +1,35 @@
+{
+    "name": "HRT Recorder",
+    "short_name": "HRT Recorder",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#14101C",
+    "theme_color": "#D946EF",
+    "description": "HRT Recorder - 用药与血药浓度记录",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

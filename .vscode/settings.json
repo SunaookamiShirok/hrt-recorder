@@ -1,0 +1,16 @@
+{
+  "cmake.sourceDirectory": "C:/Users/王/Documents/deepseek-harness/default-workspace/pk_sim/windows",
+  "dart.flutterSdkPath": "C:\\DevTools\\flutter",
+  "dart.sdkPath": "C:\\DevTools\\flutter\\bin\\cache\\dart-sdk",
+  "dart.lineLength": 100,
+  "editor.formatOnSave": true,
+  "editor.rulers": [100],
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/.dart_tool": true
+  }
+}
