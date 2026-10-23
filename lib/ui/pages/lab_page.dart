@@ -12,7 +12,10 @@ import '../widgets/common.dart';
 import '../widgets/page_layout.dart';
 
 class LabPage extends StatefulWidget {
-  const LabPage({super.key});
+  const LabPage({super.key, this.compact = false});
+
+  /// 嵌入到「记录」页时隐藏自身的大标题。
+  final bool compact;
 
   @override
   State<LabPage> createState() => _LabPageState();
@@ -373,20 +376,22 @@ class _LabPageState extends State<LabPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('化验记录',
+        if (!widget.compact) ...[
+          Text('化验记录',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 2),
+          Text(
+            '记录真实化验值并与模拟曲线对照，数据只保存在本机',
             style: Theme.of(context)
                 .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 2),
-        Text(
-          '记录真实化验值并与模拟曲线对照，数据只保存在本机',
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: scheme.onSurfaceVariant),
-        ),
-        const SizedBox(height: 14),
+                .bodySmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 14),
+        ],
         const InfoBanner(
           icon: Icons.lock_outline,
           text: '记录保存在本机（不上传任何服务器）。本工具不提供用药建议，'
@@ -487,9 +492,12 @@ class _LabPageState extends State<LabPage> {
           : Column(
               children: [
                 for (final r in records)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
+                  InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () => _editRecord(context, r),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -531,8 +539,157 @@ class _LabPageState extends State<LabPage> {
                       ],
                     ),
                   ),
+                  ),
               ],
             ),
+    );
+  }
+}
+
+Future<void> _editRecord(BuildContext context, LabRecord record) async {
+  final updated = await showDialog<LabRecord>(
+    context: context,
+    builder: (context) => _EditLabDialog(record: record),
+  );
+  if (updated != null) await LabStore.instance.update(updated);
+}
+
+class _EditLabDialog extends StatefulWidget {
+  const _EditLabDialog({required this.record});
+
+  final LabRecord record;
+
+  @override
+  State<_EditLabDialog> createState() => _EditLabDialogState();
+}
+
+class _EditLabDialogState extends State<_EditLabDialog> {
+  late DateTime _when = widget.record.takenAt;
+  late final TextEditingController _value =
+      TextEditingController(text: widget.record.value.toString());
+  late final TextEditingController _hours = TextEditingController(
+      text: widget.record.hoursSinceDose?.toString() ?? '');
+  late final TextEditingController _note =
+      TextEditingController(text: widget.record.note);
+  late ConcentrationUnit _unit = widget.record.unit;
+
+  @override
+  void dispose() {
+    _value.dispose();
+    _hours.dispose();
+    _note.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pick() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _when,
+      firstDate: DateTime(2015),
+      lastDate: DateTime.now().add(const Duration(days: 1)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_when),
+    );
+    if (!mounted) return;
+    setState(() {
+      _when = DateTime(date.year, date.month, date.day,
+          time?.hour ?? _when.hour, time?.minute ?? _when.minute);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('编辑化验记录'),
+      content: SizedBox(
+        width: 380,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _pick,
+                icon: const Icon(Icons.event, size: 18),
+                label: Text(_fmtDateTime(_when)),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _value,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: '化验值',
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<ConcentrationUnit>(
+                initialValue: _unit,
+                decoration: const InputDecoration(
+                  labelText: '单位',
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final u in ConcentrationUnit.values)
+                    DropdownMenuItem(value: u, child: Text(u.label)),
+                ],
+                onChanged: (u) {
+                  if (u != null) setState(() => _unit = u);
+                },
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _hours,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: '距上次给药 (h，可留空)',
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _note,
+                decoration: const InputDecoration(
+                  labelText: '备注',
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final value = double.tryParse(_value.text.trim());
+            if (value == null) return;
+            Navigator.pop(
+              context,
+              LabRecord(
+                id: widget.record.id,
+                takenAt: _when,
+                analyte: widget.record.analyte,
+                value: value,
+                unit: _unit,
+                hoursSinceDose: double.tryParse(_hours.text.trim()),
+                note: _note.text.trim(),
+              ),
+            );
+          },
+          child: const Text('保存'),
+        ),
+      ],
     );
   }
 }

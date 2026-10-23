@@ -18,31 +18,44 @@ class CalibrationPage extends StatelessWidget {
         children: [
           SafeArea(
             bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                children: [
-                  Text('校准与模拟',
+            child: LayoutBuilder(
+              builder: (context, c) {
+                final narrow = c.maxWidth < 640;
+                final title = Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Text('校准与模拟',
                       style: Theme.of(context).textTheme.headlineSmall),
-                  const Spacer(),
-                  TabBar(
-                    isScrollable: true,
-                    dividerColor: Colors.transparent,
-                    indicatorColor: Theme.of(context).colorScheme.primary,
-                    labelColor: PkTheme.text,
-                    unselectedLabelColor: PkTheme.muted,
-                    tabs: [
-                      Tab(text: '单次'),
-                      Tab(text: '多次'),
-                      Tab(text: '拟合'),
-                      Tab(text: 'ML'),
-                    ],
-                  ),
-                ],
-              ),
+                );
+                final tabs = TabBar(
+                  tabAlignment: narrow ? TabAlignment.start : TabAlignment.center,
+                  isScrollable: true,
+                  dividerColor: Colors.transparent,
+                  indicatorColor: Theme.of(context).colorScheme.primary,
+                  labelColor: PkTheme.text,
+                  unselectedLabelColor: PkTheme.muted,
+                  tabs: const [
+                    Tab(text: '单次'),
+                    Tab(text: '多次'),
+                    Tab(text: '拟合'),
+                    Tab(text: 'ML'),
+                  ],
+                );
+                if (narrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [title, tabs],
+                  );
+                }
+                return Row(
+                  children: [
+                    title,
+                    const SizedBox(width: 8),
+                    tabs,
+                  ],
+                );
+              },
             ),
-          ),
-          const Expanded(
+          ),          const Expanded(
             child: TabBarView(
               children: [
                 SingleDosePage(),

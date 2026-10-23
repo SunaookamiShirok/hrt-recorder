@@ -69,6 +69,7 @@ class ConcentrationChart extends StatefulWidget {
     this.animate = true,
     this.rightUnit,
     this.rightColor,
+    this.xTickLabel,
   });
 
   final List<ChartSeries> series;
@@ -76,6 +77,9 @@ class ConcentrationChart extends StatefulWidget {
   /// 右侧纵轴单位（双轴图）；为空表示不显示右轴。
   final String? rightUnit;
   final Color? rightColor;
+
+  /// 自定义横轴刻度文字（例如把「天」映射成日期）。
+  final String Function(double t)? xTickLabel;
 
   /// 预测区间带（画在曲线下方）。
   final List<ChartBand> bands;
@@ -185,6 +189,7 @@ class _ConcentrationChartState extends State<ConcentrationChart> {
                   rightTop: rightTop,
                   rightUnit: widget.rightUnit,
                   rightColor: widget.rightColor ?? scheme.secondary,
+                  xTickLabel: widget.xTickLabel,
                   hoverX: _hoverX,
                   hoverY: _hoverY,
                   progress: widget.animate ? value.clamp(0.05, 1.0) : 1.0,
@@ -264,6 +269,7 @@ class _ChartPainter extends CustomPainter {
     required this.rightTop,
     this.rightUnit,
     required this.rightColor,
+    this.xTickLabel,
     required this.hoverX,
     required this.hoverY,
     required this.progress,
@@ -286,6 +292,7 @@ class _ChartPainter extends CustomPainter {
   final double rightTop;
   final String? rightUnit;
   final Color rightColor;
+  final String Function(double t)? xTickLabel;
   final double? hoverX;
   final double? hoverY;
   final double progress;
@@ -351,8 +358,8 @@ class _ChartPainter extends CustomPainter {
       );
     }
     for (final t in xTicks) {
-      _text(canvas, fmtNum(t, maxSignificant: 3), Offset(dx(t), plot.bottom + 6),
-          align: _Align.topCenter);
+      _text(canvas, xTickLabel?.call(t) ?? fmtNum(t, maxSignificant: 3),
+          Offset(dx(t), plot.bottom + 6), align: _Align.topCenter);
     }
     _text(canvas, 't ($xUnit)', Offset(plot.right, plot.bottom + 18), align: _Align.topRight);
     _text(canvas, 'C ($yUnit)', Offset(plot.left - 8, plot.top - 4), align: _Align.bottomRight);
@@ -489,7 +496,8 @@ class _ChartPainter extends CustomPainter {
       final c = _interpolate(s.points, t);
       if (c == null) continue;
       final value = fmtNum(c, maxSignificant: 4);
-      rows.add(s.label.isEmpty ? 'C = $value $yUnit' : '${s.label}: $value');
+      final unit = s.rightAxis ? (rightUnit ?? yUnit) : yUnit;
+      rows.add('${s.label.isEmpty ? 'C' : s.label} = $value $unit');
     }
 
     const lineHeight = 17.0;

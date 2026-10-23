@@ -2,10 +2,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_settings.dart';
-import '../../core/dose_engine.dart';
 import '../../core/dose_record.dart';
 import '../../data/dose_store.dart';
-import '../../utils/format.dart';
 import '../theme.dart';
 import '../widgets/dose_form.dart';
 import 'lab_page.dart';
@@ -21,32 +19,45 @@ class RecordsPage extends StatelessWidget {
         children: [
           SafeArea(
             bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                children: [
-                  Text('记录', style: Theme.of(context).textTheme.headlineSmall),
-                  const Spacer(),
-                  TabBar(
-                    isScrollable: true,
-                    dividerColor: Colors.transparent,
-                    indicatorColor: Theme.of(context).colorScheme.primary,
-                    labelColor: PkTheme.text,
-                    unselectedLabelColor: PkTheme.muted,
-                    tabs: [
-                      Tab(text: '用药'),
-                      Tab(text: '化验'),
-                    ],
-                  ),
-                ],
-              ),
+            child: LayoutBuilder(
+              builder: (context, c) {
+                final narrow = c.maxWidth < 640;
+                final title = Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Text('记录', style: Theme.of(context).textTheme.headlineSmall),
+                );
+                final tabs = TabBar(
+                  tabAlignment: narrow ? TabAlignment.start : TabAlignment.center,
+                  isScrollable: true,
+                  dividerColor: Colors.transparent,
+                  indicatorColor: Theme.of(context).colorScheme.primary,
+                  labelColor: PkTheme.text,
+                  unselectedLabelColor: PkTheme.muted,
+                  tabs: const [
+                    Tab(text: '用药'),
+                    Tab(text: '化验'),
+                  ],
+                );
+                if (narrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [title, tabs],
+                  );
+                }
+                return Row(
+                  children: [
+                    title,
+                    const SizedBox(width: 8),
+                    tabs,
+                  ],
+                );
+              },
             ),
-          ),
-          const Expanded(
+          ),          const Expanded(
             child: TabBarView(
               children: [
                 DoseListTab(),
-                LabPage(),
+                LabPage(compact: true),
               ],
             ),
           ),
@@ -161,10 +172,7 @@ class _DoseTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Text(
-                _levelText(record),
-                style: const TextStyle(fontSize: 11, color: PkTheme.muted),
-              ),
+
             ],
           ),
         ),
@@ -172,16 +180,5 @@ class _DoseTile extends StatelessWidget {
     );
   }
 
-  /// 这条记录给药后大约贡献的峰值（非常粗略，仅用于列表辨识）。
-  String _levelText(DoseRecord r) {
-    final engine = DoseEngine(
-      doses: [r],
-      weight: AppSettings.instance.weight,
-    );
-    final peak = engine.concentrationAt(r.drug, r.takenAt.add(const Duration(hours: 2)));
-    if (peak <= 0) return '';
-    final unit = r.drug == 'CPA' ? 'ng/mL' : 'pg/mL';
-    final value = r.drug == 'CPA' ? peak * 1000 : peak * 1e6;
-    return '≈${fmtNum(value, maxSignificant: 2)} $unit';
-  }
+
 }

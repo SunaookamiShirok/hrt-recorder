@@ -1,7 +1,9 @@
 // 应用外壳：暗紫主题 + 底部五个 tab。
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../core/theme_controller.dart';
+import '../data/settings_repository.dart';
 import 'pages/calibration_page.dart';
 import 'pages/overview_page.dart';
 import 'pages/profile_page.dart';
@@ -12,7 +14,7 @@ import 'unit_scope.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ThemeController.instance.load();
+  await SettingsRepository.instance.load();
   runApp(const PkSimApp());
 }
 
@@ -34,6 +36,13 @@ class PkSimApp extends StatelessWidget {
             theme: ThemeController.instance.theme(),
             darkTheme: ThemeController.instance.theme(),
             themeMode: ThemeMode.dark,
+            locale: const Locale('zh', 'CN'),
+            supportedLocales: const [Locale('zh', 'CN'), Locale('en', 'US')],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             home: const HomeShell(),
           ),
         );

@@ -164,7 +164,7 @@ class _OverviewPageState extends State<OverviewPage> {
             const SizedBox(height: 12),
             _lastDoseCard(context, latestE2),
             const SizedBox(height: 12),
-            _chartCard(context, e2Series, cpaSeries),
+            _chartCard(context, from, e2Series, cpaSeries),
           ],
         );
       },
@@ -328,6 +328,7 @@ class _OverviewPageState extends State<OverviewPage> {
 
   Widget _chartCard(
     BuildContext context,
+    DateTime from,
     List<SamplePoint> e2,
     List<SamplePoint> cpa,
   ) {
@@ -384,19 +385,23 @@ class _OverviewPageState extends State<OverviewPage> {
               ChartSeries(
                 points: e2Points,
                 color: PkTheme.accent,
-                label: 'E2 (pg/mL)',
+                label: 'E2',
                 width: 2,
               ),
               ChartSeries(
                 points: cpaPoints,
                 color: PkTheme.accentAlt,
-                label: 'CPA (ng/mL)',
+                label: 'CPA',
                 width: 2,
                 rightAxis: true,
               ),
             ],
             height: 280,
             xUnit: '天',
+            xTickLabel: (t) {
+              final d = from.add(Duration(minutes: (t * 24 * 60).round()));
+              return '${d.month}/${d.day}';
+            },
             yUnit: 'pg/mL',
             rightUnit: 'ng/mL',
             rightColor: PkTheme.accentAlt,

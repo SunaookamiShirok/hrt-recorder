@@ -97,6 +97,13 @@ class LabStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> update(LabRecord record) async {
+    _records = [for (final r in _records) if (r.id == record.id) record else r]
+      ..sort((a, b) => b.takenAt.compareTo(a.takenAt));
+    await _persist();
+    notifyListeners();
+  }
+
   Future<void> remove(String id) async {
     _records = [for (final r in _records) if (r.id != id) r];
     await _persist();
